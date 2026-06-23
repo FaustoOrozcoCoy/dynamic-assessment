@@ -1,0 +1,16 @@
+services:
+  db:
+    image: postgres:16
+    container_name: dynamic-assessment-db
+    restart: always
+    environment:
+      POSTGRES_USER: dynamic_assessment_user
+      POSTGRES_PASSWORD: dynamic_assessment_password
+      POSTGRES_DB: dynamic_assessment_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - dynamic_assessment_postgres_data:/var/lib/postgresql/data
+
+volumes:
+  dynamic_assessment_postgres_data:
