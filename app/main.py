@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 
 from app.core.config import settings
+from app.routers import auth, roles, users
 
 
 app = FastAPI(
@@ -15,6 +16,10 @@ app.mount(
     StaticFiles(directory="app/static"),
     name="static",
 )
+
+app.include_router(auth.router)
+app.include_router(users.router)
+app.include_router(roles.router)
 
 
 @app.get("/health")

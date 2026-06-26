@@ -1,0 +1,82 @@
+from collections.abc import Callable
+
+from fastapi import Depends, HTTPException, status
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+from sqlalchemy.orm import Session
+
+from app.core.security import decode_access_token
+from app.db import get_db
+from app.models import User
+from app.repositories.role_repository import RoleRepository
+from app.repositories.user_repository import UserRepository
+
+security = HTTPBearer()
+
+
+def get_current_user(
+    credentials: HTTPAuthorizationCredentials = Depends(security),
+    db: Session = Depends(get_db),
+) -> User:
+    token = credentials.credentials
+
+    payload = decode_access_token(token)
+
+    if payload is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid or expired token",
+        )
+
+    email = payload.get("sub")
+
+    if email is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid token payload",
+        )
+
+    user = UserRepository.get_by_email(
+        db=db,
+        email=email,
+    )
+
+    if user is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="User not found",
+        )
+
+    if not user.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="User is inactive",
+        )
+
+    return user
+
+
+def require_role(role_name: str) -> Callable:
+    def dependency(
+        current_user: User = Depends(get_current_user),
+        db: Session = Depends(get_db),
+    ) -> User:
+        has_role = RoleRepository.user_has_role(
+            db=db,
+            user_id=current_user.id,
+            role_name=role_name,
+        )
+
+        if not has_role:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=f"Role '{role_name}' is required",
+            )
+
+        return current_user
+
+    return dependency
+
+
+require_admin = require_role("admin")
+require_teacher = require_role("teacher")
+require_student = require_role("student")

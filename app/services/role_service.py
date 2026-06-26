@@ -1,0 +1,110 @@
+from fastapi import HTTPException, status
+from sqlalchemy.orm import Session
+
+from app.models import Role
+from app.repositories.role_repository import RoleRepository
+from app.repositories.user_repository import UserRepository
+from app.schemas.user import RoleRead, UserRead
+from app.services.user_service import UserService
+
+
+class RoleService:
+    @staticmethod
+    def list_roles(
+        db: Session,
+    ) -> list[RoleRead]:
+        roles = RoleRepository.list_all(db=db)
+
+        return [
+            RoleRead(
+                id=role.id,
+                name=role.name,
+                description=role.description,
+            )
+            for role in roles
+        ]
+
+    @staticmethod
+    def assign_role_to_user(
+        db: Session,
+        user_id: int,
+        role_name: str,
+    ) -> UserRead:
+        user = UserRepository.get_by_id(
+            db=db,
+            user_id=user_id,
+        )
+
+        if user is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="User not found",
+            )
+
+        role = RoleRepository.get_by_name(
+            db=db,
+            name=role_name,
+        )
+
+        if role is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Role not found",
+            )
+
+        already_assigned = RoleRepository.user_has_role(
+            db=db,
+            user_id=user.id,
+            role_name=role.name,
+        )
+
+        if not already_assigned:
+            RoleRepository.assign_role(
+                db=db,
+                user=user,
+                role=role,
+            )
+
+            db.commit()
+
+        return UserService.build_user_read(db=db, user=user)
+
+    @staticmethod
+    def remove_role_from_user(
+        db: Session,
+        user_id: int,
+        role_name: str,
+    ) -> UserRead:
+        user = UserRepository.get_by_id(
+            db=db,
+            user_id=user_id,
+        )
+
+        if user is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="User not found",
+            )
+
+        role = RoleRepository.get_by_name(
+            db=db,
+            name=role_name,
+        )
+
+        if role is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Role not found",
+            )
+
+        user_role = RoleRepository.get_user_role(
+            db=db,
+            user_id=user.id,
+            role_id=role.id,
+        )
+
+        if user_role is not None:
+            db.delete(user_role)
+            db.commit()
+
+        return UserService.build_user_read(db=db, user=user)
