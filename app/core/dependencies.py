@@ -76,7 +76,31 @@ def require_role(role_name: str) -> Callable:
 
     return dependency
 
+def require_any_role(role_names: list[str]) -> Callable:
+    def dependency(
+        current_user: User = Depends(get_current_user),
+        db: Session = Depends(get_db),
+    ) -> User:
+        for role_name in role_names:
+            has_role = RoleRepository.user_has_role(
+                db=db,
+                user_id=current_user.id,
+                role_name=role_name,
+            )
+
+            if has_role:
+                return current_user
+
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="One of the required roles is needed",
+        )
+
+    return dependency
+
 
 require_admin = require_role("admin")
 require_teacher = require_role("teacher")
 require_student = require_role("student")
+
+require_admin_or_teacher = require_any_role(["admin", "teacher"])
