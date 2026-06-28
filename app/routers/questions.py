@@ -1,0 +1,76 @@
+from fastapi import APIRouter, Depends, status
+from sqlalchemy.orm import Session
+
+from app.core.dependencies import require_admin_or_teacher
+from app.db import get_db
+from app.models import User
+from app.schemas.question import QuestionCreate, QuestionRead, QuestionOptionCreate, QuestionOptionRead
+from app.services.question_service import QuestionService
+
+router = APIRouter(
+    tags=["Questions"],
+)
+
+# === QUESTIONS ===
+
+@router.post("/questions", response_model=QuestionRead, status_code=status.HTTP_201_CREATED)
+def create_question(
+    question_data: QuestionCreate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_admin_or_teacher),
+):
+    return QuestionService.create_question(db, question_data, current_user)
+
+@router.get("/questions", response_model=list[QuestionRead])
+def list_questions(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_admin_or_teacher),
+):
+    return QuestionService.list_questions(db)
+
+@router.get("/questions/{question_id}", response_model=QuestionRead)
+def get_question(
+    question_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_admin_or_teacher),
+):
+    return QuestionService.get_question(db, question_id)
+
+@router.delete("/questions/{question_id}", status_code=status.HTTP_204_NO_CONTENT)
+def deactivate_question(
+    question_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_admin_or_teacher),
+):
+    QuestionService.deactivate_question(db, question_id)
+    return None
+
+# === QUESTION OPTIONS ===
+
+@router.post("/questions/{question_id}/options", response_model=QuestionOptionRead, status_code=status.HTTP_201_CREATED)
+def add_option_to_question(
+    question_id: int,
+    option_data: QuestionOptionCreate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_admin_or_teacher),
+):
+    return QuestionService.add_option(db, question_id, option_data)
+
+@router.get("/questions/{question_id}/options", response_model=list[QuestionOptionRead])
+def list_question_options(
+    question_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_admin_or_teacher),
+):
+    question = QuestionService.get_question(db, question_id)
+    return question.options
+
+@router.delete("/questions/{question_id}/options/{option_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_question_option(
+    question_id: int,
+    option_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_admin_or_teacher),
+):
+    QuestionService.delete_option(db, question_id, option_id)
+    return None

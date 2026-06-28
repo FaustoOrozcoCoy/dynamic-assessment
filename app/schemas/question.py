@@ -1,0 +1,37 @@
+from pydantic import BaseModel, ConfigDict, Field
+from app.models.question import QuestionType
+
+# --- OPTIONS ---
+class QuestionOptionBase(BaseModel):
+    label: str = Field(..., max_length=255)
+    value: str = Field(..., max_length=255)
+    is_correct: bool = False
+    is_exclusive: bool = False
+    order_index: int
+
+class QuestionOptionCreate(QuestionOptionBase):
+    pass
+
+class QuestionOptionRead(QuestionOptionBase):
+    id: int
+    question_id: int
+    model_config = ConfigDict(from_attributes=True)
+
+
+# --- QUESTIONS ---
+class QuestionBase(BaseModel):
+    statement: str = Field(..., min_length=1)
+    question_type: QuestionType
+    image_path: str | None = None
+    config_json: dict | None = None
+
+class QuestionCreate(QuestionBase):
+    options: list[QuestionOptionCreate] = []
+
+class QuestionRead(QuestionBase):
+    id: int
+    created_by_id: int
+    is_active: bool
+    options: list[QuestionOptionRead] = []
+
+    model_config = ConfigDict(from_attributes=True)

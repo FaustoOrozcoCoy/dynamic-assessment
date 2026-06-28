@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 
 from app.core.config import settings
-from app.routers import auth, courses, roles, users
+from app.routers import auth, courses, questions, roles, users, assessments, forms
 
 
 app = FastAPI(
@@ -21,6 +21,10 @@ app.include_router(auth.router)
 app.include_router(users.router)
 app.include_router(roles.router)
 app.include_router(courses.router)
+app.include_router(questions.router)
+app.include_router(assessments.router)
+app.include_router(forms.router)
+
 
 
 @app.get("/health")

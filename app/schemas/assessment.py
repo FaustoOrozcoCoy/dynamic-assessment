@@ -1,0 +1,50 @@
+from datetime import datetime
+from pydantic import BaseModel, ConfigDict, Field
+from app.models.assessment import AssessmentType, AssessmentStatus
+from app.schemas.question import QuestionRead
+
+# --- ASSESSMENT QUESTIONS ---
+class AssessmentQuestionCreate(BaseModel):
+    question_id: int
+    order_index: int
+    points: float = Field(default=1.0, ge=0.0)
+    is_required: bool = True
+
+class AssessmentQuestionUpdate(BaseModel):
+    order_index: int | None = None
+    points: float | None = Field(default=None, ge=0.0)
+    is_required: bool | None = None
+
+class AssessmentQuestionRead(BaseModel):
+    id: int
+    assessment_id: int
+    question_id: int
+    order_index: int
+    points: float
+    is_required: bool
+    question: QuestionRead | None = None 
+
+    model_config = ConfigDict(from_attributes=True)
+
+# --- ASSESSMENTS ---
+class AssessmentCreate(BaseModel):
+    assessment_type: AssessmentType
+    title: str = Field(..., min_length=1, max_length=255)
+    description: str | None = None
+
+class AssessmentUpdate(BaseModel):
+    title: str | None = Field(default=None, min_length=1, max_length=255)
+    description: str | None = None
+
+class AssessmentRead(BaseModel):
+    id: int
+    course_id: int
+    created_by_id: int
+    assessment_type: AssessmentType
+    title: str
+    description: str | None
+    status: AssessmentStatus
+    created_at: datetime
+    published_at: datetime | None
+
+    model_config = ConfigDict(from_attributes=True)

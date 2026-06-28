@@ -1,0 +1,38 @@
+from sqlalchemy import select
+from sqlalchemy.orm import Session
+from app.models import Assessment, AssessmentQuestion, AssessmentStatus
+
+class AssessmentRepository:
+    @staticmethod
+    def create(db: Session, assessment: Assessment) -> Assessment:
+        db.add(assessment)
+        return assessment
+
+    @staticmethod
+    def get_by_id(db: Session, assessment_id: int) -> Assessment | None:
+        return db.get(Assessment, assessment_id)
+
+    @staticmethod
+    def list_by_course(db: Session, course_id: int, exclude_archived: bool = True) -> list[Assessment]:
+        statement = select(Assessment).where(Assessment.course_id == course_id)
+        if exclude_archived:
+            statement = statement.where(Assessment.status != AssessmentStatus.archived)
+        return list(db.execute(statement.order_by(Assessment.id)).scalars().all())
+
+    @staticmethod
+    def add_question(db: Session, assessment_question: AssessmentQuestion) -> AssessmentQuestion:
+        db.add(assessment_question)
+        return assessment_question
+
+    @staticmethod
+    def get_assessment_question(db: Session, aq_id: int) -> AssessmentQuestion | None:
+        return db.get(AssessmentQuestion, aq_id)
+
+    @staticmethod
+    def list_assessment_questions(db: Session, assessment_id: int) -> list[AssessmentQuestion]:
+        statement = (
+            select(AssessmentQuestion)
+            .where(AssessmentQuestion.assessment_id == assessment_id)
+            .order_by(AssessmentQuestion.order_index)
+        )
+        return list(db.execute(statement).scalars().all())
