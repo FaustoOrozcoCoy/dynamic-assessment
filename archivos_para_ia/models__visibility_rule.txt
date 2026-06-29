@@ -1,3 +1,5 @@
+# Archivo original: models/visibility_rule.py
+
 import enum
 from datetime import datetime
 

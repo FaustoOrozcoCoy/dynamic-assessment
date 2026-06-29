@@ -1,0 +1,62 @@
+from fastapi import APIRouter, Depends, status
+from sqlalchemy.orm import Session
+
+from app.core.dependencies import require_student, get_current_user
+from app.db import get_db
+from app.models import User
+from app.schemas.attempt import AssessmentAttemptRead, AnswerListSave, AttemptFormRead, SubmitResponse
+from app.services.attempt_service import AttemptService
+
+
+router = APIRouter(
+    tags=["Attempts & Answers"],
+)
+
+@router.post("/assessments/{assessment_id}/attempts/start", response_model=AssessmentAttemptRead, status_code=status.HTTP_201_CREATED)
+def start_attempt(
+    assessment_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_student)
+):
+    """Starts a new attempt or resumes an in_progress attempt"""
+    return AttemptService.start_attempt(db, assessment_id, current_user)
+
+
+@router.get("/attempts/{attempt_id}", response_model=AssessmentAttemptRead)
+def get_attempt_status(
+    attempt_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """Gets the basic status of an attempt"""
+    return AttemptService.get_attempt(db, attempt_id, current_user)
+
+
+@router.post("/attempts/{attempt_id}/answers", status_code=status.HTTP_200_OK)
+def save_partial_answers(
+    attempt_id: int,
+    data: AnswerListSave,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_student)
+):
+    """Saves partial answers without submitting the exam"""
+    AttemptService.save_partial_answers(db, attempt_id, data, current_user)
+    return {"message": "Answers saved successfully"}
+
+@router.get("/attempts/{attempt_id}/form", response_model=AttemptFormRead)
+def get_attempt_form(
+    attempt_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_student)
+):
+    """Gets the form with partial answers saved by the student"""
+    return AttemptService.get_attempt_form(db, attempt_id, current_user)
+
+@router.post("/attempts/{attempt_id}/submit", response_model=SubmitResponse)
+def submit_attempt(
+    attempt_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_student)
+):
+    """Send the final exam, validating visibility rules and required fields."""
+    return AttemptService.submit_attempt(db, attempt_id, current_user)

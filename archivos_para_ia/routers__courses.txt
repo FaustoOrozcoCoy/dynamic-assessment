@@ -1,0 +1,166 @@
+# Archivo original: routers/courses.py
+
+from fastapi import APIRouter, Depends, status
+from sqlalchemy.orm import Session
+
+from app.core.dependencies import get_current_user, require_admin_or_teacher, require_student
+from app.db import get_db
+from app.models import User
+from app.schemas.course import CourseCreate, CourseRead, CourseUpdate, EnrollmentCreate, EnrollmentRead
+from app.services.course_service import CourseService
+
+router = APIRouter(
+    tags=["Courses"],
+)
+
+
+@router.post(
+    "/courses",
+    response_model=CourseRead,
+    status_code=status.HTTP_201_CREATED,
+)
+def create_course(
+    course_data: CourseCreate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_admin_or_teacher),
+):
+    return CourseService.create_course(
+        db=db,
+        course_data=course_data,
+        current_user=current_user,
+    )
+
+
+@router.get(
+    "/courses",
+    response_model=list[CourseRead],
+)
+def list_courses(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_admin_or_teacher),
+):
+    return CourseService.list_courses(
+        db=db,
+        current_user=current_user,
+    )
+
+
+@router.get(
+    "/courses/{course_id}",
+    response_model=CourseRead,
+)
+def get_course(
+    course_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_admin_or_teacher),
+):
+    return CourseService.get_course(
+        db=db,
+        course_id=course_id,
+        current_user=current_user,
+    )
+
+
+@router.patch(
+    "/courses/{course_id}",
+    response_model=CourseRead,
+)
+def update_course(
+    course_id: int,
+    course_data: CourseUpdate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_admin_or_teacher),
+):
+    return CourseService.update_course(
+        db=db,
+        course_id=course_id,
+        course_data=course_data,
+        current_user=current_user,
+    )
+
+
+@router.delete(
+    "/courses/{course_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+)
+def deactivate_course(
+    course_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_admin_or_teacher),
+):
+    CourseService.deactivate_course(
+        db=db,
+        course_id=course_id,
+        current_user=current_user,
+    )
+
+    return None
+
+
+@router.post(
+    "/courses/{course_id}/enrollments",
+    response_model=EnrollmentRead,
+    status_code=status.HTTP_201_CREATED,
+)
+def enroll_student(
+    course_id: int,
+    enrollment_data: EnrollmentCreate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_admin_or_teacher),
+):
+    return CourseService.enroll_student(
+        db=db,
+        course_id=course_id,
+        enrollment_data=enrollment_data,
+        current_user=current_user,
+    )
+
+
+@router.get(
+    "/courses/{course_id}/enrollments",
+    response_model=list[EnrollmentRead],
+)
+def list_course_enrollments(
+    course_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_admin_or_teacher),
+):
+    return CourseService.list_course_enrollments(
+        db=db,
+        course_id=course_id,
+        current_user=current_user,
+    )
+
+
+@router.delete(
+    "/courses/{course_id}/enrollments/{student_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+)
+def remove_enrollment(
+    course_id: int,
+    student_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_admin_or_teacher),
+):
+    CourseService.remove_enrollment(
+        db=db,
+        course_id=course_id,
+        student_id=student_id,
+        current_user=current_user,
+    )
+
+    return None
+
+
+@router.get(
+    "/me/courses",
+    response_model=list[CourseRead],
+)
+def list_my_courses(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_student),
+):
+    return CourseService.list_my_courses(
+        db=db,
+        current_user=current_user,
+    )

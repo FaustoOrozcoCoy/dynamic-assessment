@@ -1,0 +1,20 @@
+# Archivo original: repositories/visibility_repository.py
+
+from sqlalchemy import select
+from sqlalchemy.orm import Session
+from app.models.visibility_rule import VisibilityRule
+
+class VisibilityRuleRepository:
+    @staticmethod
+    def create(db: Session, rule: VisibilityRule) -> VisibilityRule:
+        db.add(rule)
+        return rule
+
+    @staticmethod
+    def get_by_assessment_question(db: Session, aq_id: int) -> VisibilityRule | None:
+        statement = select(VisibilityRule).where(VisibilityRule.assessment_question_id == aq_id)
+        return db.execute(statement).scalar_one_or_none()
+
+    @staticmethod
+    def delete(db: Session, rule: VisibilityRule):
+        db.delete(rule)

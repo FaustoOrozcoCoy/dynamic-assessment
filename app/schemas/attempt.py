@@ -1,0 +1,49 @@
+from datetime import datetime
+from pydantic import BaseModel, ConfigDict
+from app.models.attempt import AttemptStatus
+from app.schemas.form import FormRead
+
+
+# --- ANSWERS ---
+class QuestionAnswerSave(BaseModel):
+    assessment_question_id: int
+    answer_json: dict | list | str | int | float | bool
+
+class AnswerListSave(BaseModel):
+    answers: list[QuestionAnswerSave]
+
+class QuestionAnswerRead(BaseModel):
+    id: int
+    attempt_id: int
+    assessment_question_id: int
+    answer_json: dict | list | str | int | float | bool
+    score: float | None
+    feedback: str | None
+
+    model_config = ConfigDict(from_attributes=True)
+
+# --- ATTEMPTS ---
+class AssessmentAttemptRead(BaseModel):
+    id: int
+    assessment_id: int
+    student_id: int
+    status: AttemptStatus
+    attempt_number: int
+    score: float | None
+    started_at: datetime
+    submitted_at: datetime | None
+    graded_at: datetime | None
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+# --- ATTEMPT FORM ---
+class AttemptFormRead(BaseModel):
+    attempt_id: int
+    status: AttemptStatus
+    form: FormRead
+    saved_answers: dict[int, dict | list | str | int | float | bool]
+
+class SubmitResponse(BaseModel):
+    message: str
+    attempt: AssessmentAttemptRead

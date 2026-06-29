@@ -1,3 +1,5 @@
+# Archivo original: models/assessment.py
+
 import enum
 from datetime import datetime
 
