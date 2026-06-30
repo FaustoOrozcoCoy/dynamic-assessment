@@ -5,6 +5,8 @@ from app.models.user import Role, User, UserRole
 from app.models.assessment import Assessment, AssessmentQuestion, AssessmentType, AssessmentStatus
 from app.models.visibility_rule import VisibilityRule, VisibilityOperator
 from app.models.attempt import AssessmentAttempt, AttemptStatus, QuestionAnswer
+from app.models.ai_feedback import AIFeedback, AIFeedbackStatus
+
 
 
 __all__ = [
@@ -26,4 +28,6 @@ __all__ = [
     "AssessmentAttempt",
     "AttemptStatus",
     "QuestionAnswer",
-    ]
+    "AIFeedback",
+    "AIFeedbackStatus"
+]

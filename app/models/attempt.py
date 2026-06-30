@@ -4,6 +4,7 @@ from datetime import datetime
 from sqlalchemy import DateTime, Float, ForeignKey, Integer, String, JSON, UniqueConstraint, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
+from app.models.ai_feedback import AIFeedback
 from app.models.base import Base
 
 
@@ -71,3 +72,10 @@ class QuestionAnswer(Base):
 
     attempt: Mapped["AssessmentAttempt"] = relationship(back_populates="answers")
     assessment_question = relationship("AssessmentQuestion")
+
+    ai_feedback: Mapped["AIFeedback"] = relationship(
+        "AIFeedback", 
+        back_populates="answer", 
+        uselist=False, 
+        cascade="all, delete-orphan"
+    )

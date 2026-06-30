@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 
 from app.core.config import settings
-from app.routers import auth, courses, questions, roles, users, assessments, forms, attempts
+from app.routers import auth, courses, questions, roles, users, assessments, forms, attempts, results
 
 
 app = FastAPI(
@@ -25,6 +25,7 @@ app.include_router(questions.router)
 app.include_router(assessments.router)
 app.include_router(forms.router)
 app.include_router(attempts.router)
+app.include_router(results.router)
 
 
 

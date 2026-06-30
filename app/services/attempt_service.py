@@ -13,6 +13,8 @@ from app.repositories.enrollment_repository import EnrollmentRepository
 from app.schemas.attempt import AssessmentAttemptRead, AnswerListSave, AttemptFormRead, SubmitResponse
 from app.services.assessment_service import AssessmentService
 from app.services.form_service import FormService
+from app.services.grading_service import GradingService
+
 
 
 class AttemptService:
@@ -187,7 +189,9 @@ class AttemptService:
         db.commit()
         db.refresh(attempt)
         
+        GradingService.grade_attempt(db, attempt)
+        
         return SubmitResponse(
-            message="Attempt submitted successfully.",
+            message="Attempt submitted and graded successfully.",
             attempt=AssessmentAttemptRead.model_validate(attempt)
         )
