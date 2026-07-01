@@ -1,9 +1,23 @@
-from fastapi import HTTPException, status
+import uuid
+from pathlib import Path
+
+from fastapi import HTTPException, UploadFile, status
 from sqlalchemy.orm import Session
+
 from app.models import Question, QuestionOption, User
 from app.models.question import QuestionType
 from app.repositories.question_repository import QuestionRepository
 from app.schemas.question import QuestionCreate, QuestionRead, QuestionOptionCreate, QuestionOptionRead
+
+IMAGES_DIR = Path("app/static/images")
+ALLOWED_CONTENT_TYPES = {"image/png", "image/jpeg", "image/gif", "image/webp"}
+MAX_FILE_SIZE = 5 * 1024 * 1024  # 5 MB
+_EXTENSION_MAP = {
+    "image/png": ".png",
+    "image/jpeg": ".jpg",
+    "image/gif": ".gif",
+    "image/webp": ".webp",
+}
 
 class QuestionService:
     
@@ -59,6 +73,42 @@ class QuestionService:
         question = QuestionRepository.get_by_id(db, question_id)
         if not question or not question.is_active:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Question not found")
+        return QuestionRead.model_validate(question)
+
+    @staticmethod
+    def upload_image(db: Session, question_id: int, file: UploadFile, current_user: User) -> QuestionRead:
+        question = QuestionRepository.get_by_id(db, question_id)
+        if not question or not question.is_active:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Question not found")
+
+        if file.content_type not in ALLOWED_CONTENT_TYPES:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Invalid file type. Allowed: png, jpg, gif, webp.",
+            )
+
+        contents = file.file.read()
+        if len(contents) > MAX_FILE_SIZE:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="File too large. Maximum allowed size is 5 MB.",
+            )
+
+        # Remove previous image file if one exists
+        if question.image_path:
+            old_file = Path("app") / question.image_path.lstrip("/")
+            if old_file.exists():
+                old_file.unlink()
+
+        extension = _EXTENSION_MAP[file.content_type]
+        filename = f"{uuid.uuid4().hex}{extension}"
+        IMAGES_DIR.mkdir(parents=True, exist_ok=True)
+        (IMAGES_DIR / filename).write_bytes(contents)
+
+        question.image_path = f"/static/images/{filename}"
+        db.commit()
+        db.refresh(question)
+
         return QuestionRead.model_validate(question)
 
     @staticmethod

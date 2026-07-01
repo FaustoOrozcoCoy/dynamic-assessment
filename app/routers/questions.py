@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, File, UploadFile, status
 from sqlalchemy.orm import Session
 
 from app.core.dependencies import require_admin_or_teacher
@@ -35,6 +35,15 @@ def get_question(
     current_user: User = Depends(require_admin_or_teacher),
 ):
     return QuestionService.get_question(db, question_id)
+
+@router.post("/questions/{question_id}/image", response_model=QuestionRead)
+def upload_question_image(
+    question_id: int,
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_admin_or_teacher),
+):
+    return QuestionService.upload_image(db, question_id, file, current_user)
 
 @router.delete("/questions/{question_id}", status_code=status.HTTP_204_NO_CONTENT)
 def deactivate_question(

@@ -197,6 +197,7 @@ Question bank endpoints.
 | POST | `/questions` | Create a reusable question. | Admin / Teacher |
 | GET | `/questions` | List active questions. | Admin / Teacher |
 | GET | `/questions/{question_id}` | Get question details. | Admin / Teacher |
+| POST | `/questions/{question_id}/image` | Upload or replace the image for a question. | Admin / Teacher |
 | DELETE | `/questions/{question_id}` | Deactivate question using soft delete. | Admin / Teacher |
 
 ### Business rules
@@ -205,7 +206,10 @@ Question bank endpoints.
 - Questions are reusable across assessments.
 - Questions are not editable in the MVP.
 - Each question may have at most one image.
-- Images are served by the backend through static URLs.
+- Images are uploaded via `POST /questions/{question_id}/image` using `multipart/form-data`.
+- Accepted formats: PNG, JPG, GIF, WebP. Maximum size: 5 MB.
+- Uploading a new image replaces the previous one.
+- Images are served by the backend through static URLs under `/static/images/`.
 
 ### Question creation note
 
@@ -322,7 +326,7 @@ The form response may include:
 - assessment question id
 - question type
 - statement
-- image URL
+- image_path
 - options
 - validation rules
 - score
@@ -558,17 +562,17 @@ DELETE /questions/{question_id}
 
 Question images are stored by the backend and exposed as static files.
 
-The API returns image URLs in question or form payloads.
+The API returns the image path in question and form payloads using the field `image_path`.
 
 Example:
 
 ```json
 {
-  "image_url": "/static/images/example-question.png"
+  "image_path": "/static/images/example-question.png"
 }
 ```
 
-The frontend is responsible for rendering the image.
+The frontend is responsible for constructing the full URL (e.g. prepending the base API URL) and rendering the image.
 
 ---
 

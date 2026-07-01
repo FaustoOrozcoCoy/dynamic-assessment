@@ -560,7 +560,7 @@ Example response field:
 
 ```json
 {
-  "image_url": "/static/images/example-question.png"
+  "image_path": "/static/images/example-question.png"
 }
 ```
 
