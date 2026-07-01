@@ -1,0 +1,35 @@
+info:
+  name: 1. Login Profesor
+  type: http
+  seq: 4
+
+http:
+  method: POST
+  url: "{{base_url}}/auth/login"
+  body:
+    type: json
+    data: |-
+      {
+        "email": "teacher@example.com",
+        "password": "teacher12345"
+      }
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: after-response
+      code: |-
+        // Extraemos el cuerpo de la respuesta
+        const data = res.getBody();
+
+        // Si hay un token, lo guardamos en el environment
+        if(data.access_token) {
+          bru.setEnvVar("teacher_token", data.access_token);
+          console.log("Token de profesor guardado!");
+        }
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

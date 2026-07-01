@@ -1,0 +1,10 @@
+name: Local
+variables:
+  - name: base_url
+    value: http://localhost:8000
+  - name: teacher_token
+    value: ""
+  - name: admin_token
+    value: ""
+  - name: student_token
+    value: ""

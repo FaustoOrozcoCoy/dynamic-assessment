@@ -1,0 +1,39 @@
+info:
+  name: 1. Login Estudiante
+  type: http
+  seq: 1
+
+http:
+  method: POST
+  url: "{{base_url}}/auth/login"
+  body:
+    type: json
+    data: |-
+      {
+        "email": "estudiante@demo.com",
+        "password": "password123"
+      }
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: after-response
+      code: |-
+        // Extraemos el cuerpo de la respuesta
+        const data = res.getBody();
+
+        console.log("Respuesta completa:", data); 
+
+
+        // Si hay un token, lo guardamos en el environment
+        if(data.access_token) {
+          bru.setEnvVar("student_token", data.access_token);
+          console.log("Token de estudiante guardado!");
+        }
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+​

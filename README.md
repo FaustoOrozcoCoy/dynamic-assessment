@@ -1,222 +1,124 @@
 # Dynamic Assessment API
 
-Dynamic Assessment API is a backend platform for managing dynamic academic assessments in a university environment.
+![FastAPI](https://img.shields.io/badge/FastAPI-005571?style=for-the-badge&logo=fastapi)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-316192?style=for-the-badge&logo=postgresql&logoColor=white)
+![SQLAlchemy](https://img.shields.io/badge/SQLAlchemy-D71F00?style=for-the-badge&logo=sqlalchemy&logoColor=white)
+![OpenRouter](https://img.shields.io/badge/AI_Feedback-OpenRouter-blue?style=for-the-badge)
 
-The system allows administrators and teachers to manage users, courses, enrollments, reusable questions, assessments, student attempts, grading, and AI-assisted feedback.
+A backend platform designed to manage dynamic academic assessments within a university environment. 
 
-The project is designed as a modular monolith using a layered architecture.
+This API allows administrators and teachers to manage users, courses, question banks, dynamic assessments, responses, automatic grading, and AI-assisted feedback.
 
----
+## 🚀 Features
 
-## Project Status
+- **Role-Based Access Control (RBAC):** Users can hold multiple roles (`admin`, `teacher`, `student`) with specific permissions.
+- **Shared Question Bank:** Reusable questions with various types (`single_choice`, `multiple_choice`, `open_text`, `boolean`, etc.).
+- **Dynamic Assessments:** Rule-based visibility mapping (e.g., show Question 2 only if Question 1 answer is "Yes"). Validated atomically in the backend.
+- **Stateful Attempts:** Students can start, save progress (`in_progress`), and submit assessments.
+- **Automatic Grading & AI Feedback:** Objective questions are graded instantly. Open-text responses are evaluated using LLMs via OpenRouter, providing constructive feedback asynchronously.
+- **Modular Monolith Architecture:** Clean separation of concerns using Routers, Services, Repositories, and Models.
 
-This project is currently in the initial setup phase.
+## 🛠️ Tech Stack
 
-The product scope, domain model, architecture, database design, and API design are documented before implementation.
+- **Framework:** FastAPI (Python 3.11+)
+- **Database:** PostgreSQL 16
+- **ORM & Migrations:** SQLAlchemy 2.0 & Alembic
+- **Validation:** Pydantic
+- **Authentication:** JWT (JSON Web Tokens) with bcrypt hashing
+- **AI Integration:** httpx & OpenRouter API (gpt-4o-mini)
+- **Containerization:** Docker & Docker Compose
+- **API Testing:** Bruno
 
-Current documentation:
-
-```text
-docs/
-├── mvp.md
-├── domain.md
-├── architecture.md
-├── database-design.md
-└── api-design.md
-```
-
----
-
-## Main Features
-
-The MVP includes:
-
-- User management with multiple roles.
-- Role-based access control.
-- Course management.
-- Student enrollments.
-- Shared reusable question bank.
-- Dynamic assessments.
-- Dynamic form rendering support.
-- Partial answer saving.
-- Resumable assessment attempts.
-- Automatic grading for objective questions.
-- AI-assisted feedback for open-text answers.
-- Static image support for questions.
-- Soft delete for selected resources.
-
----
-
-## Main Roles
-
-The system supports the following roles:
-
-- `admin`
-- `teacher`
-- `student`
-
-A user may have more than one role.
-
----
-
-## Technology Stack
-
-Planned technologies:
-
-- Python
-- FastAPI
-- PostgreSQL
-- SQLAlchemy
-- Alembic
-- Pydantic
-- JWT authentication
-- Docker
-- Bruno
-- OpenRouter
-- GitHub
-
----
-
-## Architecture
-
-The application follows a modular monolith architecture with global layers.
-
-Planned structure:
+## 📂 Project Structure
 
 ```text
-app/
-  main.py
-
-  core/
-  models/
-  schemas/
-  repositories/
-  services/
-  routers/
-  integrations/
-  static/
-    images/
+dynamic-assessment-api/
+├── alembic/                # Database migrations
+├── app/
+│   ├── core/               # Settings, security, dependencies
+│   ├── integrations/       # External services (LLM client)
+│   ├── models/             # SQLAlchemy ORM models
+│   ├── repositories/       # Database access layer
+│   ├── routers/            # FastAPI HTTP endpoints
+│   ├── schemas/            # Pydantic validation models
+│   ├── services/           # Business logic and transaction management
+│   └── main.py             # Application entry point
+├── bruno/                  # API test collections
+├── docs/                   # System design documentation
+├── scripts/                # Utility scripts (seeders)
+└── docker-compose.yml      # Local database environment
 ```
 
-Layer responsibilities:
+## ⚙️ Local Setup & Installation
 
-- `routers/`: HTTP endpoints.
-- `services/`: business logic.
-- `repositories/`: database access.
-- `models/`: SQLAlchemy models.
-- `schemas/`: Pydantic request and response schemas.
-- `core/`: configuration, security, and shared utilities.
-- `integrations/`: external service clients.
-- `static/images/`: local static images served by the backend.
+### 1. Prerequisites
+- Python 3.11 or higher
+- Docker & Docker Compose
+- Git
 
----
-
-## Documentation
-
-Detailed design documents are available in the `docs/` directory:
-
-| Document | Purpose |
-| :--- | :--- |
-| `docs/mvp.md` | Product scope and MVP definition. |
-| `docs/domain.md` | Domain model, entities, relationships, and business rules. |
-| `docs/architecture.md` | Application architecture and layer responsibilities. |
-| `docs/database-design.md` | Initial relational database design. |
-| `docs/api-design.md` | Main API endpoints, permissions, and workflows. |
-
----
-
-## Local Development
-
-Local development instructions will be added as the implementation progresses.
-
-Planned setup:
-
-```text
-1. Create a virtual environment.
-2. Install dependencies.
-3. Configure environment variables.
-4. Start PostgreSQL with Docker.
-5. Run Alembic migrations.
-6. Seed initial data.
-7. Start the FastAPI application.
+### 2. Clone and Configure Environment
+Clone the repository and set up your virtual environment:
+```bash
+git clone <repository-url>
+cd dynamic-assessment-api
+python -m venv .venv
 ```
 
----
+Activate the virtual environment:
+- **Windows:** `.\.venv\Scripts\Activate.ps1` (or `.bat`)
+- **macOS/Linux:** `source .venv/bin/activate`
 
-## Environment Variables
-
-The project will use environment variables for sensitive configuration.
-
-An example file will be provided:
-
-```text
-.env.example
+Install dependencies:
+```bash
+pip install -r requirements.txt
 ```
 
-Local secrets must be stored in:
+### 3. Environment Variables
+Copy the example environment file and update the variables:
+```bash
+cp .env.example .env
+```
+Make sure to add your actual `OPENROUTER_API_KEY` in the `.env` file to enable AI grading.
 
-```text
-.env
+### 4. Start Database & Run Migrations
+Start the local PostgreSQL container:
+```bash
+docker compose up -d
+```
+Apply the database schema using Alembic:
+```bash
+alembic upgrade head
 ```
 
-The `.env` file must not be committed to the repository.
-
-Expected variables:
-
-```env
-DATABASE_URL=
-SECRET_KEY=
-ALGORITHM=
-ACCESS_TOKEN_EXPIRE_MINUTES=
-OPENROUTER_API_KEY=
-OPENROUTER_MODEL=
+### 5. Seed the Database (Demo Data)
+Populate the database with initial roles, users, a course, a question bank, a published assessment, and dynamic visibility rules:
+```bash
+python -m scripts.seed_demo
 ```
+*Note: This will create an `admin`, a `teacher`, and a `student` (default password: `password123`).*
 
----
-
-## API Testing
-
-The API will be tested using:
-
-- FastAPI Swagger UI
-- Bruno collections
-
-The Bruno collection will be stored in:
-
-```text
-bruno/
+### 6. Run the Application
+Start the FastAPI development server:
+```bash
+uvicorn app.main:app --reload
 ```
+The API will be available at `http://127.0.0.1:8000`.
+- **Interactive Swagger Documentation:** `http://127.0.0.1:8000/docs`
 
+## 🧪 Testing the API
 
----
+This project uses **[Bruno](https://www.usebruno.com/)** for API testing instead of Postman.
 
-## Current Phase
+1. Download and install Bruno.
+2. Click **Open Collection** and select the `bruno/` folder in this repository.
+3. Select the `Local` environment in the top right corner.
+4. Execute the `Login` requests. Bruno will automatically capture the JWT token and inject it into subsequent requests using collection variables.
 
-The project is currently in:
+## 📖 Documentation
 
-```text
-Phase 6 — Project Preparation
-```
-
-Previous completed planning phases:
-
-```text
-Phase 0 — Product discovery
-Phase 1 — MVP definition
-Phase 2 — Domain modeling
-Phase 3 — Architecture design
-Phase 4 — Database design
-Phase 5 — API design
-```
-
-Next implementation phase:
-
-```text
-Phase 7 — Base backend implementation
-```
-
----
-
-## License
-
-License information will be added later.
+Detailed architectural decisions, domain models, and API contracts can be found in the `docs/` directory:
+- `api-design.md`
+- `architecture.md`
+- `database-design.md`
+- `domain.md`
+- `mvp.md`

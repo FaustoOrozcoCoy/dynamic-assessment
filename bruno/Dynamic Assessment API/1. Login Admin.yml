@@ -1,0 +1,35 @@
+info:
+  name: 1. Login Admin
+  type: http
+  seq: 4
+
+http:
+  method: POST
+  url: "{{base_url}}/auth/login"
+  body:
+    type: json
+    data: |-
+      {
+        "email": "admin@example.com",
+        "password": "admin12345"
+      }
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: after-response
+      code: |-
+        // Extraemos el cuerpo de la respuesta
+        const data = res.getBody();
+
+        // Si hay un token, lo guardamos en el environment
+        if(data.access_token) {
+          bru.setEnvVar("admin_token", data.access_token);
+          console.log("Token de admin guardado!");
+        }
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
