@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dynamic Assessment API — Demo</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+  <link href="css/style.css" rel="stylesheet">
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════════
+     TOAST CONTAINER
+══════════════════════════════════════════════ -->
+<div id="toast-container" class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index:9999"></div>
+
+<!-- ══════════════════════════════════════════════
+     LOGIN SCREEN
+══════════════════════════════════════════════ -->
+<div id="login-screen">
+  <div class="login-card">
+    <div class="text-center mb-4">
+      <div class="fw-bold fs-5">Dynamic Assessment API</div>
+      <div class="text-muted small">Demo frontend — proyecto de aprendizaje backend</div>
+    </div>
+
+    <!-- Quick demo logins -->
+    <p class="text-muted small fw-semibold mb-2">Acceso rápido (datos del seed):</p>
+    <div class="row g-2 mb-4">
+      <div class="col-4">
+        <div class="demo-card" onclick="quickLogin('admin@demo.com')">
+          <div class="demo-role text-danger">Admin</div>
+          <div class="demo-email">admin@demo.com</div>
+        </div>
+      </div>
+      <div class="col-4">
+        <div class="demo-card" onclick="quickLogin('profe@demo.com')">
+          <div class="demo-role text-primary">Docente</div>
+          <div class="demo-email">profe@demo.com</div>
+        </div>
+      </div>
+      <div class="col-4">
+        <div class="demo-card" onclick="quickLogin('estudiante@demo.com')">
+          <div class="demo-role text-success">Estudiante</div>
+          <div class="demo-email">estudiante@demo.com</div>
+        </div>
+      </div>
+    </div>
+
+    <hr class="my-3">
+    <p class="text-muted small fw-semibold mb-2">O ingresa manualmente:</p>
+    <form onsubmit="handleLogin(event)">
+      <div class="mb-3">
+        <label class="form-label small">Email</label>
+        <input type="email" name="email" class="form-control form-control-sm" placeholder="usuario@demo.com" required>
+      </div>
+      <div class="mb-3">
+        <label class="form-label small">Contraseña</label>
+        <input type="password" name="password" class="form-control form-control-sm" placeholder="password123" required>
+      </div>
+      <button type="submit" class="btn btn-primary w-100">
+        <i class="bi bi-box-arrow-in-right me-1"></i>Iniciar sesión
+      </button>
+    </form>
+
+    <div class="text-center mt-3">
+      <small class="text-muted">Contraseña para todos los usuarios demo: <code>password123</code></small>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     MAIN APP
+══════════════════════════════════════════════ -->
+<div id="app" class="d-none">
+
+  <!-- SIDEBAR -->
+  <nav class="sidebar">
+    <div class="sidebar-brand">
+      <div class="brand-title"><i class="bi bi-mortarboard-fill me-2 text-primary"></i>DAA Demo</div>
+      <div class="brand-sub">Dynamic Assessment API</div>
+    </div>
+
+    <div class="sidebar-nav">
+      <a class="nav-link" data-view="dashboard" onclick="navigate('dashboard')">
+        <i class="bi bi-speedometer2 me-2"></i>Dashboard
+      </a>
+
+      <!-- Staff section -->
+      <div class="sidebar-section staff-section">Gestión</div>
+      <a class="nav-link admin-item" data-view="users" onclick="navigate('users')">
+        <i class="bi bi-people me-2"></i>Usuarios
+      </a>
+      <a class="nav-link staff-item" data-view="courses" onclick="navigate('courses')">
+        <i class="bi bi-book me-2"></i>Cursos
+      </a>
+      <a class="nav-link staff-item" data-view="questions" onclick="navigate('questions')">
+        <i class="bi bi-question-circle me-2"></i>Banco de preguntas
+      </a>
+
+      <!-- Student section -->
+      <div class="sidebar-section student-section">Estudiante</div>
+      <a class="nav-link student-item" data-view="my-assessments" onclick="navigate('my-assessments')">
+        <i class="bi bi-clipboard-check me-2"></i>Mis evaluaciones
+      </a>
+    </div>
+
+    <!-- JWT Token (educational) -->
+    <div class="jwt-box">
+      <div class="jwt-label"><i class="bi bi-key me-1"></i>JWT Token activo</div>
+      <div class="jwt-value" id="jwt-preview">—</div>
+    </div>
+
+    <!-- User info -->
+    <div class="sidebar-user">
+      <div class="user-name" id="sb-name">—</div>
+      <div class="user-email" id="sb-email">—</div>
+      <div class="mt-1" id="sb-roles"></div>
+      <button class="btn btn-outline-light btn-sm w-100 mt-2" onclick="doLogout()">
+        <i class="bi bi-box-arrow-right me-1"></i>Cerrar sesión
+      </button>
+    </div>
+  </nav>
+
+  <!-- MAIN WRAPPER -->
+  <div class="main-wrapper">
+    <div class="topbar">
+      <i class="bi bi-grid-1x2 text-muted"></i>
+      <span class="topbar-title flex-grow-1">Dynamic Assessment API</span>
+      <span class="topbar-user d-none d-md-block">
+        <i class="bi bi-circle-fill text-success me-1" style="font-size:.5rem"></i>
+        Backend en <code>localhost:8000</code>
+      </span>
+    </div>
+    <div class="content-area" id="content-area">
+      <!-- Dynamic content rendered by app.js -->
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     MODALS
+══════════════════════════════════════════════ -->
+
+<!-- Modal: Create User -->
+<div class="modal fade" id="modal-create-user" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title"><i class="bi bi-person-plus me-2"></i>Nuevo usuario</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <form onsubmit="submitCreateUser(event)">
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label small">Nombre completo</label>
+            <input type="text" name="full_name" class="form-control" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label small">Email</label>
+            <input type="email" name="email" class="form-control" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label small">Contraseña</label>
+            <input type="password" name="password" class="form-control" minlength="8" required>
+          </div>
+          <div class="mb-2">
+            <label class="form-label small">Roles</label>
+            <div class="d-flex gap-3">
+              <label><input type="checkbox" name="roles" value="admin" class="me-1">Admin</label>
+              <label><input type="checkbox" name="roles" value="teacher" class="me-1">Docente</label>
+              <label><input type="checkbox" name="roles" value="student" class="me-1">Estudiante</label>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn btn-primary btn-sm">Crear usuario</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Assign Role -->
+<div class="modal fade" id="modal-assign-role" tabindex="-1">
+  <div class="modal-dialog modal-sm">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title"><i class="bi bi-person-gear me-2"></i>Asignar rol</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <form onsubmit="submitAssignRole(event)">
+        <div class="modal-body">
+          <input type="hidden" id="ar-uid">
+          <p class="small text-muted mb-3">Usuario: <strong id="ar-name"></strong></p>
+          <div class="mb-2">
+            <label class="form-label small">Rol a asignar</label>
+            <select name="role" class="form-select">
+              <option value="admin">admin</option>
+              <option value="teacher">teacher</option>
+              <option value="student">student</option>
+            </select>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn btn-primary btn-sm">Asignar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Create Course -->
+<div class="modal fade" id="modal-create-course" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title"><i class="bi bi-book me-2"></i>Nuevo curso</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <form onsubmit="submitCreateCourse(event)">
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label small">Nombre del curso</label>
+            <input type="text" name="c_name" class="form-control" minlength="3" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label small">Descripción (opcional)</label>
+            <textarea name="c_desc" class="form-control" rows="2"></textarea>
+          </div>
+          <div id="course-teacher-row" style="display:none">
+            <label class="form-label small">Docente responsable</label>
+            <select name="teacher_id" id="course-teacher-sel" class="form-select"></select>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn btn-primary btn-sm">Crear curso</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Enroll Student -->
+<div class="modal fade" id="modal-enroll-student" tabindex="-1">
+  <div class="modal-dialog modal-sm">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title"><i class="bi bi-person-plus me-2"></i>Inscribir estudiante</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <form onsubmit="submitEnroll(event)">
+        <div class="modal-body">
+          <input type="hidden" id="enroll-cid">
+          <p class="small text-muted mb-3">Curso: <strong id="enroll-cname"></strong></p>
+          <div class="mb-2">
+            <label class="form-label small">Estudiante</label>
+            <select id="enroll-student-sel" class="form-select"></select>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn btn-primary btn-sm">Inscribir</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Create Question -->
+<div class="modal fade" id="modal-create-question" tabindex="-1">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title"><i class="bi bi-question-circle me-2"></i>Nueva pregunta</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <form id="form-create-question" onsubmit="submitCreateQuestion(event)">
+        <div class="modal-body">
+          <div class="row g-3 mb-3">
+            <div class="col-md-4">
+              <label class="form-label small">Tipo</label>
+              <select id="q-type" class="form-select" onchange="onQTypeChange()">
+                <option value="single_choice">Selección única</option>
+                <option value="multiple_choice">Selección múltiple</option>
+                <option value="boolean">Verdadero / Falso</option>
+                <option value="open_text">Texto abierto</option>
+                <option value="number">Numérico</option>
+                <option value="scale">Escala</option>
+              </select>
+            </div>
+            <div class="col-md-8">
+              <label class="form-label small">Enunciado</label>
+              <textarea id="q-statement" class="form-control" rows="2" required placeholder="Escribe la pregunta..."></textarea>
+            </div>
+          </div>
+
+          <!-- Options section -->
+          <div id="q-opts-section">
+            <label class="form-label small fw-semibold">Opciones de respuesta</label>
+            <div id="q-opts-container" class="mb-2"></div>
+            <button type="button" class="btn btn-outline-secondary btn-sm" onclick="addQOption()">
+              <i class="bi bi-plus me-1"></i>Agregar opción
+            </button>
+            <small class="text-muted ms-2">Marca ✓ la(s) opción(es) correcta(s)</small>
+          </div>
+
+          <!-- Config section -->
+          <div id="q-cfg-section" style="display:none" class="mt-3">
+            <label class="form-label small fw-semibold">Configuración</label>
+            <div id="q-cfg-fields"></div>
+          </div>
+
+          <div class="alert alert-info mt-3 py-2 small">
+            <i class="bi bi-info-circle me-1"></i>
+            Después de crear la pregunta podrás subir una imagen desde el <strong>Banco de preguntas</strong>.
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn btn-primary btn-sm">Crear pregunta</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Create Assessment -->
+<div class="modal fade" id="modal-create-assessment" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title"><i class="bi bi-clipboard-plus me-2"></i>Nueva evaluación</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <form onsubmit="submitCreateAssessment(event)">
+        <div class="modal-body">
+          <input type="hidden" id="ca-cid">
+          <div class="mb-3">
+            <label class="form-label small">Título</label>
+            <input type="text" name="ca_title" class="form-control" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label small">Tipo</label>
+            <select name="ca_type" class="form-select">
+              <option value="quiz">Quiz</option>
+              <option value="exam">Examen</option>
+              <option value="workshop">Taller</option>
+              <option value="form">Formulario</option>
+            </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label small">Descripción (opcional)</label>
+            <textarea name="ca_desc" class="form-control" rows="2"></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn btn-primary btn-sm">Crear evaluación</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Add Question to Assessment -->
+<div class="modal fade" id="modal-add-question" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title"><i class="bi bi-plus-circle me-2"></i>Agregar pregunta</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <form onsubmit="submitAddQuestion(event)">
+        <div class="modal-body">
+          <input type="hidden" id="aq-aid">
+          <div class="mb-3">
+            <label class="form-label small">Pregunta del banco</label>
+            <select name="aq_qsel" id="aq-qsel" class="form-select"></select>
+          </div>
+          <div class="row g-2">
+            <div class="col-md-4">
+              <label class="form-label small">Posición (order)</label>
+              <input type="number" name="aq_order" class="form-control" value="1" min="1" required>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label small">Puntaje</label>
+              <input type="number" name="aq_points" class="form-control" value="1.0" min="0" step="0.5" required>
+            </div>
+            <div class="col-md-4 d-flex align-items-end">
+              <div class="form-check">
+                <input type="checkbox" name="aq_required" id="aq-req" class="form-check-input" checked>
+                <label class="form-check-label small" for="aq-req">Requerida</label>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn btn-primary btn-sm">Agregar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Visibility Rule -->
+<div class="modal fade" id="modal-visibility-rule" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title"><i class="bi bi-funnel me-2"></i>Regla de visibilidad</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <form onsubmit="submitVisibilityRule(event)">
+        <div class="modal-body">
+          <input type="hidden" id="vr-aqid">
+          <input type="hidden" id="vr-aid">
+
+          <div class="alert alert-info py-2 small">
+            <i class="bi bi-eye me-1"></i>
+            Esta pregunta solo será visible <strong>si</strong> la respuesta a la pregunta seleccionada cumple la condición.
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label small">Depende de la pregunta</label>
+            <select name="vr_dep" id="vr-dep-sel" class="form-select"></select>
+          </div>
+          <div class="row g-2 mb-3">
+            <div class="col-md-5">
+              <label class="form-label small">Operador</label>
+              <select name="vr_op" class="form-select">
+                <option value="equals">equals (=)</option>
+                <option value="not_equals">not_equals (≠)</option>
+                <option value="contains">contains (contiene)</option>
+                <option value="greater_than">greater_than (&gt;)</option>
+                <option value="less_than">less_than (&lt;)</option>
+              </select>
+            </div>
+            <div class="col-md-7">
+              <label class="form-label small">Valor esperado (JSON o texto)</label>
+              <input type="text" name="vr_expected" id="vr_expected" class="form-control"
+                     placeholder='Ej: "true", "A", 3, ["A","B"]' required>
+              <small class="text-muted">Para texto: escribe el valor tal cual. Para número/booleano: sin comillas.</small>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn btn-info btn-sm text-white">Crear regla</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     SCRIPTS
+══════════════════════════════════════════════ -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script src="js/api.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>

@@ -43,6 +43,7 @@ class AttemptFormRead(BaseModel):
     status: AttemptStatus
     form: FormRead
     saved_answers: dict[int, dict | list | str | int | float | bool]
+    answer_ids: dict[int, int]  # assessment_question_id → question_answer_id
 
 class SubmitResponse(BaseModel):
     message: str

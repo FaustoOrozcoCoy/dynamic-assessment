@@ -103,7 +103,12 @@ class AttemptService:
         form_structure = FormService.get_assessment_form(db, attempt.assessment_id, current_user)
         
         saved_answers = {
-            ans.assessment_question_id: ans.answer_json 
+            ans.assessment_question_id: ans.answer_json
+            for ans in attempt.answers
+        }
+
+        answer_ids = {
+            ans.assessment_question_id: ans.id
             for ans in attempt.answers
         }
 
@@ -111,7 +116,8 @@ class AttemptService:
             attempt_id=attempt.id,
             status=attempt.status,
             form=form_structure,
-            saved_answers=saved_answers
+            saved_answers=saved_answers,
+            answer_ids=answer_ids,
         )
 
     @staticmethod
